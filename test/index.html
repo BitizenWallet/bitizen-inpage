@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js" type="application/javascript"></script>
+  <script src="../dist/index.js"></script>
+</head>
+
+<body>
+  <p>
+    <span id="address"></span>&nbsp;balance:
+    <span id="balance"></span>
+  </p>
+  <script type="module">
+    console.log("window.ethereum", window.ethereum);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    console.log("provider", provider);
+    const signer = await provider.getSigner().getAddress();
+    document.getElementById("address").textContent = signer;
+    const balance = await provider.getBalance(signer);
+    document.getElementById("balance").textContent = ethers.utils.formatEther(
+      balance
+    );
+  </script>
+</body>
+
+</html>
