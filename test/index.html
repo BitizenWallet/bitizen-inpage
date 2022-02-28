@@ -17,10 +17,16 @@
   </p>
   <script type="module">
     console.log("window.ethereum", window.ethereum);
+    window.ethereum.isMetaMask = 1;
     window.ethereum._BitizenUpdateRpcUrl("0x38", "https://bsc-dataseed.binance.org/")
     // console.log("getAccounts", await window.ethereum.request({ id: 0, method: "eth_accounts" }));
     const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     console.log("provider", provider);
+
+    window.ethereum.on('connect', console.log)
+    window.ethereum.on('networkChanged', console.log)
+    window.ethereum.on('chainChanged', console.log)
+
     // const signer = await provider.getSigner().getAddress();
     const signer = "0x0000000000000000000000000000000000000000";
     document.getElementById("address").textContent = signer;
@@ -29,6 +35,10 @@
     document.getElementById("balance").textContent = ethers.utils.formatEther(
       balance
     );
+
+    window.ethereum._BitizenEventEmit('connect', [{ "chainId": "0x123" }])
+    window.ethereum._BitizenEventEmit('networkChanged', [100])
+    window.ethereum._BitizenEventEmit('chainChanged', ["0x234"])
 
     await new Promise((resolve) => setTimeout(resolve, 5000))
     window.ethereum._BitizenUpdateRpcUrl('0x' + Number(250).toString(16), "https://rpc.ftm.tools/")
