@@ -3,24 +3,28 @@ const BitizenCreateAsyncMiddleware = require("json-rpc-engine/src/createAsyncMid
 const BitizenRpcEngine = require("json-rpc-engine")
 import SafeEventEmitter from '@metamask/safe-event-emitter';
 
-const _bitizenHandledReqMethods = [
-  "eth_requestAccounts",
-  "eth_accounts",
-  "eth_sendTransaction",
-  "eth_sign",
-  "eth_decrypt",
-  "eth_getEncryptionPublicKey",
-  "wallet_requestPermissions",
-  "wallet_getPermissions",
-  "wallet_addEthereumChain",
-  "wallet_switchEthereumChain",
-  "wallet_watchAsset",
-  "wallet_scanQRCode",
-]
+const _bitizenHandledReqMethods = {
+  "eth_requestAccounts": true,
+  "eth_accounts": true,
+  "eth_sendTransaction": true,
+  "eth_sign": true,
+  "personal_sign": true,
+  "eth_decrypt": true,
+  "eth_getEncryptionPublicKey": true,
+  "wallet_requestPermissions": true,
+  "wallet_getPermissions": true,
+  "wallet_addEthereumChain": true,
+  "wallet_switchEthereumChain": true,
+  "wallet_watchAsset": true,
+  "wallet_scanQRCode": true,
+  "eth_signTypedData": true,
+  "eth_signTypedData_v3": true,
+  "eth_signTypedData_v4": true,
+}
 
 const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
   async (req, res, next) => {
-    if (_bitizenHandledReqMethods.indexOf(req.method) != -1) {
+    if (_bitizenHandledReqMethods[req.method]) {
       req.chainId = window.ethereum.chainId
       try {
         const data = await window.flutter_inappwebview.callHandler("BitizenRpcRequest", JSON.stringify(req))
@@ -37,17 +41,25 @@ const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
 
 window.ethereum = {
   isBitizen: true,
-  isMetaMask: true, // TODO
+  isMetaMask: false, // enable for debug, https://metamask.github.io/test-dapp/
   isConnected: false,
   chainId: "",
+  reqId: 1,
   async request(req) {
     if (!req.jsonrpc) {
       req.jsonrpc = "2.0"
     }
-    console.log("bitizen_inpage req", req);
+    if (!req.id) {
+      req.id = this.reqId++;
+    }
+    if (this.isMetaMask) {
+      console.log("bitizen_inpage req", req.id, req);
+    }
     return new Promise(async (resolve, reject) => {
-      const res = await window.ethereum._bitizenRpcEngine.handle(req)
-      console.log("bitizen_inpage res", res.result, res.error);
+      const res = await this._bitizenRpcEngine.handle(req)
+      if (this.isMetaMask) {
+        console.log("bitizen_inpage res", res.result, res.error);
+      }
       if (res.error) {
         reject(res.error)
       } else {
@@ -55,18 +67,18 @@ window.ethereum = {
       }
     })
   },
-  on: (topic, callback) => window.ethereum._bitizenEventEmitter.on(topic, callback),
+  on: (topic, callback) => this._bitizenEventEmitter.on(topic, callback),
   _bitizenEventEmitter: new SafeEventEmitter(),
   _bitizenRpcEngine: new BitizenRpcEngine(),
   _BitizenUpdateRpcUrl(chainId, rpcUrl) {
-    window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
-    window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
-    window.ethereum._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
-    window.ethereum.chainId = chainId
-    window.ethereum.isConnected = true
+    this._bitizenRpcEngine = new BitizenRpcEngine()
+    this._bitizenRpcEngine.push(bitizenRpcRequestHandler)
+    this._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
+    this.chainId = chainId
+    this.isConnected = true
   },
   _BitizenEventEmit(topic, args = []) {
-    window.ethereum._bitizenEventEmitter.emit(topic, ...args)
+    this._bitizenEventEmitter.emit(topic, ...args)
   }
 }
 

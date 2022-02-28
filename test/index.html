@@ -19,12 +19,12 @@
     console.log("window.ethereum", window.ethereum);
     window.ethereum._BitizenUpdateRpcUrl("0x38", "https://bsc-dataseed.binance.org/")
     // console.log("getAccounts", await window.ethereum.request({ id: 0, method: "eth_accounts" }));
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     console.log("provider", provider);
     // const signer = await provider.getSigner().getAddress();
     const signer = "0x0000000000000000000000000000000000000000";
     document.getElementById("address").textContent = signer;
-    let balance = await provider.getBalance("0x0000000000000000000000000000000000000000");
+    let balance = await provider.getBalance(signer);
     console.log("balance", balance);
     document.getElementById("balance").textContent = ethers.utils.formatEther(
       balance
@@ -32,7 +32,7 @@
 
     await new Promise((resolve) => setTimeout(resolve, 5000))
     window.ethereum._BitizenUpdateRpcUrl('0x' + Number(250).toString(16), "https://rpc.ftm.tools/")
-    balance = await provider.getBalance("0x0000000000000000000000000000000000000000");
+    balance = await provider.getBalance(signer);
     console.log("balance", balance);
     document.getElementById("balance").textContent = ethers.utils.formatEther(
       balance
