@@ -86,4 +86,8 @@ window.ethereum = {
     })
   },
   on: (topic, callback) => window.ethereum._bitizenEventEmitter.on(topic, callback),
+  enable: () => window.ethereum.request({ method: 'eth_requestAccounts' }),
+  removeListener: (eventName, listener) => window.ethereum._bitizenEventEmitter.removeListener(eventName, listener),
+  removeAllListeners: (list) => window.ethereum._bitizenEventEmitter.removeAllListeners(list),
 }
+
