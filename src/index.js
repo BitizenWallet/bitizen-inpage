@@ -42,7 +42,7 @@ const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
 window.ethereum = {
   isBitizen: true,
   isMetaMask: false, // enable for debug, https://metamask.github.io/test-dapp/
-  isConnected: false,
+  isConnected: () => window.ethereum.chainId != "",
   chainId: "",
   reqId: 1,
   _bitizenEventEmitter: new SafeEventEmitter(),
@@ -55,7 +55,6 @@ window.ethereum = {
     window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
     window.ethereum._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
     window.ethereum.chainId = chainId
-    window.ethereum.isConnected = true
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.isMetaMask) {
