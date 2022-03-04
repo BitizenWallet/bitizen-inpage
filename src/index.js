@@ -8,18 +8,26 @@ const _bitizenHandledReqMethods = {
   "eth_accounts": true,
   "eth_sendTransaction": true,
   "eth_sign": true,
-  "eth_decrypt": true,
-  "eth_getEncryptionPublicKey": true,
+  // "eth_decrypt": true,
+  // "eth_getEncryptionPublicKey": true,
   "eth_signTypedData": true,
   "eth_signTypedData_v3": true,
   "eth_signTypedData_v4": true,
   "personal_sign": true,
-  "wallet_requestPermissions": true,
-  "wallet_getPermissions": true,
+  // "wallet_requestPermissions": true,
+  // "wallet_getPermissions": true,
   "wallet_addEthereumChain": true,
   "wallet_switchEthereumChain": true,
   "wallet_watchAsset": true,
-  "wallet_scanQRCode": true,
+  // "wallet_scanQRCode": true,
+}
+
+// Deprecated warning message: https://github.com/MetaMask/providers/blob/main/src/messages.ts
+const _bitizenHandledEvents = {
+  "accountsChanged": true,
+  "chainChanged": true,
+  "connect": true,
+  "networkChanged": `Bitizen: The event 'networkChanged' is deprecated and may be removed in the future. Use 'chainChanged' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193#chainchanged`,
 }
 
 const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
@@ -49,7 +57,7 @@ window.ethereum = {
   _bitizenRpcEngine: new BitizenRpcEngine(),
   _BitizenUpdateRpcUrl(chainId, rpcUrl) {
     if (window.ethereum.isMetaMask) {
-      console.log("bitizen_inpage update RPC", chainId, rpcUrl);
+      console.log("Bitizen: [debug] update RPC", chainId, rpcUrl);
     }
     window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
     window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
@@ -58,7 +66,7 @@ window.ethereum = {
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.isMetaMask) {
-      console.log("bitizen_inpage emit", topic, args);
+      console.log("Bitizen: [debug] emit", topic, args);
     }
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
@@ -70,12 +78,12 @@ window.ethereum = {
       req.id = window.ethereum.reqId++;
     }
     if (window.ethereum.isMetaMask) {
-      console.log("bitizen_inpage req", req.id, req);
+      console.log("Bitizen: [debug] request", req.id, req);
     }
     return new Promise(async (resolve, reject) => {
       const res = await window.ethereum._bitizenRpcEngine.handle(req)
       if (window.ethereum.isMetaMask) {
-        console.log("bitizen_inpage res", res.result, res.error);
+        console.log("Bitizen: [debug] response", res.result, res.error);
       }
       if (res.error) {
         reject(res.error)
@@ -84,8 +92,25 @@ window.ethereum = {
       }
     })
   },
-  on: (topic, callback) => window.ethereum._bitizenEventEmitter.on(topic, callback),
-  enable: () => window.ethereum.request({ method: 'eth_requestAccounts' }),
+  on: (topic, callback) => {
+    let msg = _bitizenHandledEvents[topic];
+    if (!_bitizenHandledEvents[topic]) {
+      console.error(`Bitizen: '` + topic + `' is deprecated and may be removed in the future or unsupported for now.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+      return;
+    }
+    if (typeof msg == 'string') {
+      console.warn(msg);
+    }
+    window.ethereum._bitizenEventEmitter.on(topic, callback)
+  },
+  enable: () => {
+    console.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
+    window.ethereum.request({ method: 'eth_requestAccounts' })
+  },
+  send: (method) => {
+    console.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+    return window.ethereum.request({ method })
+  },
   removeListener: (eventName, listener) => window.ethereum._bitizenEventEmitter.removeListener(eventName, listener),
   removeAllListeners: (list) => window.ethereum._bitizenEventEmitter.removeAllListeners(list),
 }
