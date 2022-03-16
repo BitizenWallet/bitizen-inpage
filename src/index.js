@@ -61,7 +61,9 @@ window.ethereum = {
     }
     window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
     window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
-    window.ethereum._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
+    if (rpcUrl) {
+      window.ethereum._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
+    }
     window.ethereum.chainId = chainId
   },
   _BitizenEventEmit(topic, args = []) {
@@ -71,6 +73,11 @@ window.ethereum = {
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
   async request(req) {
+    // For Opensea
+    if (req.method && req.method.method) {
+      req = req.method
+    }
+
     if (!req.jsonrpc) {
       req.jsonrpc = "2.0"
     }
@@ -94,7 +101,7 @@ window.ethereum = {
   },
   on: (topic, callback) => {
     let msg = _bitizenHandledEvents[topic];
-    if (!_bitizenHandledEvents[topic]) {
+    if (!msg) {
       console.error(`Bitizen: '` + topic + `' is deprecated and may be removed in the future or unsupported for now.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
       return;
     }
