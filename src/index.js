@@ -49,14 +49,14 @@ const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
 
 window.ethereum = {
   isBitizen: true,
-  isMetaMask: false, // enable for debug, https://metamask.github.io/test-dapp/
+  debug: false,
   isConnected: () => window.ethereum.chainId != "",
   chainId: "",
   reqId: 1,
   _bitizenEventEmitter: new SafeEventEmitter(),
   _bitizenRpcEngine: new BitizenRpcEngine(),
   _BitizenUpdateRpcUrl(chainId, rpcUrl) {
-    if (window.ethereum.isMetaMask) {
+    if (window.ethereum.debug) {
       console.log("Bitizen: [debug] update RPC", chainId, rpcUrl);
     }
     window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
@@ -67,7 +67,7 @@ window.ethereum = {
     window.ethereum.chainId = chainId
   },
   _BitizenEventEmit(topic, args = []) {
-    if (window.ethereum.isMetaMask) {
+    if (window.ethereum.debug) {
       console.log("Bitizen: [debug] emit", topic, args);
     }
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
@@ -84,12 +84,12 @@ window.ethereum = {
     if (!req.id) {
       req.id = window.ethereum.reqId++;
     }
-    if (window.ethereum.isMetaMask) {
+    if (window.ethereum.debug) {
       console.log("Bitizen: [debug] request", req.id, req);
     }
     return new Promise(async (resolve, reject) => {
       const res = await window.ethereum._bitizenRpcEngine.handle(req)
-      if (window.ethereum.isMetaMask) {
+      if (window.ethereum.debug) {
         console.log("Bitizen: [debug] response", res.result, res.error);
       }
       if (res.error) {

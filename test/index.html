@@ -17,7 +17,7 @@
   </p>
   <script type="module">
     console.log("window.ethereum", window.ethereum);
-    window.ethereum.isMetaMask = 1;
+    window.ethereum.debug = true;
     window.ethereum._BitizenUpdateRpcUrl("0x38", "https://bsc-dataseed.binance.org/")
     // console.log("getAccounts", await window.ethereum.request({ id: 0, method: "eth_accounts" }));
     const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
