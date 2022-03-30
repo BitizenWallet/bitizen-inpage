@@ -68,7 +68,7 @@ window.ethereum = {
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.debug) {
-      console.log("Bitizen: [debug] emit", topic, JSON.stringify(args));
+      console.log("Bitizen: [debug] emit", topic, args);
     }
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
@@ -85,12 +85,12 @@ window.ethereum = {
       req.id = window.ethereum.reqId++;
     }
     if (window.ethereum.debug) {
-      console.log("Bitizen: [debug] request", req.id, JSON.stringify(req));
+      console.log("Bitizen: [debug] request", req.id, req);
     }
     return new Promise(async (resolve, reject) => {
       const res = await window.ethereum._bitizenRpcEngine.handle(req)
       if (window.ethereum.debug) {
-        console.log("Bitizen: [debug] response", JSON.stringify(res.result), JSON.stringify(res.error));
+        console.log("Bitizen: [debug] response", res.result, res.error);
       }
       if (res.error) {
         reject(res.error)
