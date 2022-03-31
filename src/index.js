@@ -31,7 +31,7 @@ const _bitizenHandledEvents = {
 }
 
 async function getFlutterInAppWebview() {
-  while (!window.flutter_inappwebview && window.ethereum.isBitizen) {
+  while ((!window['flutter_inappwebview'] || !window['flutter_inappwebview']['callHandler']) && window.ethereum.isBitizen) {
     await new Promise(resolve => { setTimeout(resolve, 300) })
   }
   return window.flutter_inappwebview
@@ -43,7 +43,7 @@ const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
       req.chainId = window.ethereum.chainId
       try {
         const webview = await getFlutterInAppWebview();
-        const data = webview.callHandler("BitizenRpcRequest", JSON.stringify(req))
+        const data = await webview.callHandler("BitizenRpcRequest", JSON.stringify(req))
         res.error = data.error
         res.result = data.result
       } catch (error) {
@@ -65,7 +65,7 @@ window.ethereum = {
   _bitizenRpcEngine: new BitizenRpcEngine(),
   _BitizenUpdateRpcUrl(chainId, rpcUrl) {
     if (window.ethereum.debug) {
-      console.log("Bitizen: [debug] update RPC", chainId, rpcUrl);
+      console.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
     }
     window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
     window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
@@ -76,7 +76,7 @@ window.ethereum = {
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.debug) {
-      console.log("Bitizen: [debug] emit", topic, args);
+      console.debug("Bitizen: [debug] emit", topic, args);
     }
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
@@ -93,12 +93,12 @@ window.ethereum = {
       req.id = window.ethereum.reqId++;
     }
     if (window.ethereum.debug) {
-      console.log("Bitizen: [debug] request", req.id, req);
+      console.debug("Bitizen: [debug] request", req.id, req.method);
     }
     return new Promise(async (resolve, reject) => {
       const res = await window.ethereum._bitizenRpcEngine.handle(req)
       if (window.ethereum.debug) {
-        console.log("Bitizen: [debug] response", res.result, res.error);
+        console.debug("Bitizen: [debug] response", req.id, res);
       }
       if (res.error) {
         reject(res.error)
