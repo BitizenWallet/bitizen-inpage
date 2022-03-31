@@ -30,12 +30,20 @@ const _bitizenHandledEvents = {
   "networkChanged": `Bitizen: The event 'networkChanged' is deprecated and may be removed in the future. Use 'chainChanged' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193#chainchanged`,
 }
 
+async function getFlutterInAppWebview() {
+  while (!window.flutter_inappwebview && window.ethereum.isBitizen) {
+    await new Promise(resolve => { setTimeout(resolve, 300) })
+  }
+  return window.flutter_inappwebview
+}
+
 const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
   async (req, res, next) => {
     if (_bitizenHandledReqMethods[req.method]) {
       req.chainId = window.ethereum.chainId
       try {
-        const data = await window.flutter_inappwebview.callHandler("BitizenRpcRequest", JSON.stringify(req))
+        const webview = await getFlutterInAppWebview();
+        const data = webview.callHandler("BitizenRpcRequest", JSON.stringify(req))
         res.error = data.error
         res.result = data.result
       } catch (error) {
