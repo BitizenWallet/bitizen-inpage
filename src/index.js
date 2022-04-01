@@ -5,6 +5,7 @@ import SafeEventEmitter from '@metamask/safe-event-emitter';
 
 const _bitizenHandledReqMethods = {
   "eth_requestAccounts": true,
+  "eth_requestAccountsMultiChain": true, // For BitizenWallet internal development use only.
   "eth_accounts": true,
   "eth_sendTransaction": true,
   "eth_sign": true,
