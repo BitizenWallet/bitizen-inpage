@@ -62,7 +62,7 @@ window.ethereum = {
   _bitizenRpcWriteEngine: _bitizenRpcWriteEngine,
   _bitizenRpcReadEngines: {},
   _BitizenUpdateReadRpcEngines(list) {
-    _bitizenRpcReadEngines = {}
+    window.ethereum._bitizenRpcReadEngines = {}
     if (!list) {
       return
     }
