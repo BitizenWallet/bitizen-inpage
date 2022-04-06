@@ -38,23 +38,19 @@ async function getFlutterInAppWebview() {
   return window.flutter_inappwebview
 }
 
-const bitizenRpcRequestHandler = BitizenCreateAsyncMiddleware(
+const _bitizenRpcWriteEngine = new BitizenRpcEngine();
+_bitizenRpcWriteEngine.push(BitizenCreateAsyncMiddleware(
   async (req, res, next) => {
-    if (_bitizenHandledReqMethods[req.method]) {
-      req.chainId = window.ethereum.chainId
-      try {
-        const webview = await getFlutterInAppWebview();
-        const data = await webview.callHandler("BitizenRpcRequest", JSON.stringify(req))
-        res.error = data.error
-        res.result = data.result
-      } catch (error) {
-        res.error = error
-      }
-    } else {
-      next()
+    try {
+      const webview = await getFlutterInAppWebview();
+      const data = await webview.callHandler("BitizenRpcRequest", JSON.stringify(req))
+      res.error = data.error
+      res.result = data.result
+    } catch (error) {
+      res.error = error
     }
   }
-)
+))
 
 window.ethereum = {
   isBitizen: true,
@@ -63,17 +59,24 @@ window.ethereum = {
   chainId: "",
   reqId: 1,
   _bitizenEventEmitter: new SafeEventEmitter(),
-  _bitizenRpcEngine: new BitizenRpcEngine(),
-  _BitizenUpdateRpcUrl(chainId, rpcUrl) {
-    if (window.ethereum.debug) {
-      console.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
+  _bitizenRpcWriteEngine: _bitizenRpcWriteEngine,
+  _bitizenRpcReadEngines: {},
+  _BitizenUpdateReadRpcEngines(list) {
+    _bitizenRpcReadEngines = {}
+    if (!list) {
+      return
     }
-    window.ethereum._bitizenRpcEngine = new BitizenRpcEngine()
-    window.ethereum._bitizenRpcEngine.push(bitizenRpcRequestHandler)
-    if (rpcUrl) {
-      window.ethereum._bitizenRpcEngine.push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
-    }
-    window.ethereum.chainId = chainId
+    list.forEach(el => {
+      const [chainId, rpcUrl] = el;
+      if (window.ethereum.debug) {
+        console.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
+      }
+      window.ethereum._bitizenRpcReadEngines[chainId] = new BitizenRpcEngine()
+      if (rpcUrl) {
+        window.ethereum._bitizenRpcReadEngines[chainId].push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
+      }
+    });
+    window.ethereum.chainId = list[0][0]
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.debug) {
@@ -86,18 +89,27 @@ window.ethereum = {
     if (req.method && req.method.method) {
       req = req.method
     }
-
     if (!req.jsonrpc) {
       req.jsonrpc = "2.0"
     }
     if (!req.id) {
       req.id = window.ethereum.reqId++;
     }
+    if (!req.chainId) {
+      req.chainId = window.ethereum.chainId
+    }
     if (window.ethereum.debug) {
       console.debug("Bitizen: [debug] request", req.id, req.method);
     }
     return new Promise(async (resolve, reject) => {
-      const res = await window.ethereum._bitizenRpcEngine.handle(req)
+      let res
+
+      if (_bitizenHandledReqMethods[req.method]) {
+        res = await window.ethereum._bitizenRpcWriteEngine.handle(req)
+      } else {
+        res = await (window.ethereum._bitizenRpcReadEngines[req.chainId] ?? new BitizenRpcEngine()).handle(req)
+      }
+
       if (window.ethereum.debug) {
         console.debug("Bitizen: [debug] response", req.id, res);
       }
