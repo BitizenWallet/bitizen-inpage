@@ -133,7 +133,7 @@ window.ethereum = {
   },
   enable: () => {
     _bitizenConsole.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
-    window.ethereum.request({ method: 'eth_requestAccounts' })
+    return window.ethereum.request({ method: 'eth_requestAccounts' })
   },
   send: (method) => {
     _bitizenConsole.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
