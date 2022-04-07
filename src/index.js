@@ -58,7 +58,7 @@ window.ethereum = {
   isConnected: () => window.ethereum.chainId != "",
   chainId: "",
   reqId: 1,
-  version: '0.0.17',
+  version: '0.0.18',
   _bitizenEventEmitter: new SafeEventEmitter(),
   _bitizenRpcWriteEngine: _bitizenRpcWriteEngine,
   _bitizenRpcReadEngines: {},
@@ -147,13 +147,13 @@ window.ethereum = {
           _bitizenConsole.debug("Bitizen: [debug] send response", res);
         });
       } else {
-        window.ethereum.request(req)
+        return window.ethereum.request(req)
       }
     } else {
       return new Promise(async (resolve, reject) => {
         try {
           const resp = await window.ethereum.request({ method: req, params: cb });
-          _bitizenConsole.debug("Bitizen: [debug] send response", res);
+          _bitizenConsole.debug("Bitizen: [debug] send response", resp);
           resolve({ id: undefined, jsonrpc: '2.0', result: resp });
         } catch (error) {
           _bitizenConsole.debug("Bitizen: [debug] send response", error);
