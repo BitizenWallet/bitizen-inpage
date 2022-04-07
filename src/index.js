@@ -150,16 +150,16 @@ window.ethereum = {
         window.ethereum.request(req)
       }
     } else {
-      const res = new Promise(async (resolve, reject) => {
+      return new Promise(async (resolve, reject) => {
         try {
           const resp = await window.ethereum.request({ method: req, params: cb });
+          _bitizenConsole.debug("Bitizen: [debug] send response", res);
           resolve({ id: undefined, jsonrpc: '2.0', result: resp });
         } catch (error) {
-          reject({ id: undefined, jsonrpc: '2.0', error: error });
+          _bitizenConsole.debug("Bitizen: [debug] send response", error);
+          reject(error);
         }
       })
-      _bitizenConsole.debug("Bitizen: [debug] send response", res);
-      return res
     }
   },
   removeListener: (eventName, listener) => window.ethereum._bitizenEventEmitter.removeListener(eventName, listener),
