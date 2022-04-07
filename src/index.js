@@ -58,6 +58,7 @@ window.ethereum = {
   isConnected: () => window.ethereum.chainId != "",
   chainId: "",
   reqId: 1,
+  version: '0.0.15',
   _bitizenEventEmitter: new SafeEventEmitter(),
   _bitizenRpcWriteEngine: _bitizenRpcWriteEngine,
   _bitizenRpcReadEngines: {},
@@ -68,9 +69,7 @@ window.ethereum = {
     }
     list.forEach(el => {
       const [chainId, rpcUrl] = el;
-      if (window.ethereum.debug) {
-        _bitizenConsole.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
-      }
+      _bitizenConsole.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
       window.ethereum._bitizenRpcReadEngines[chainId] = new BitizenRpcEngine()
       if (rpcUrl) {
         window.ethereum._bitizenRpcReadEngines[chainId].push(BitizenCreateHttpRpcMiddleware({ rpcUrl }))
@@ -79,16 +78,10 @@ window.ethereum = {
     window.ethereum.chainId = list[0][0]
   },
   _BitizenEventEmit(topic, args = []) {
-    if (window.ethereum.debug) {
-      _bitizenConsole.debug("Bitizen: [debug] emit", topic, args);
-    }
+    _bitizenConsole.debug("Bitizen: [debug] emit", topic, args);
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
   async request(req) {
-    // For Opensea
-    if (req.method && req.method.method) {
-      req = req.method
-    }
     if (!req.jsonrpc) {
       req.jsonrpc = "2.0"
     }
@@ -98,9 +91,7 @@ window.ethereum = {
     if (!req.chainId) {
       req.chainId = window.ethereum.chainId
     }
-    if (window.ethereum.debug) {
-      _bitizenConsole.debug("Bitizen: [debug] request", req.id, req.method);
-    }
+    _bitizenConsole.debug("Bitizen: [debug] request", req.id, req.method);
     return new Promise(async (resolve, reject) => {
       let res
 
@@ -110,9 +101,7 @@ window.ethereum = {
         res = await (window.ethereum._bitizenRpcReadEngines[req.chainId] ?? new BitizenRpcEngine()).handle(req)
       }
 
-      if (window.ethereum.debug) {
-        _bitizenConsole.debug("Bitizen: [debug] response", req.id, res);
-      }
+      _bitizenConsole.debug("Bitizen: [debug] response", req.id, res);
       if (res.error) {
         reject(res.error)
       } else {
@@ -133,11 +122,40 @@ window.ethereum = {
   },
   enable: () => {
     _bitizenConsole.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
-    return window.ethereum.request({ method: 'eth_requestAccounts' })
+    return window.ethereum.request({ method: 'eth_requestAccounts' });
   },
-  send: (method) => {
+  send: (req, cb) => {
     _bitizenConsole.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
-    return window.ethereum.request({ method })
+    _bitizenConsole.debug("Bitizen: [debug] send request", req, cb);
+    if (typeof req == 'object') {
+      if (cb) {
+        window.ethereum.request(req).then(result => {
+          const res = {
+            id: req.id,
+            jsonrpc: req.jsonrpc,
+            result: result,
+          };
+          cb(null, res)
+          _bitizenConsole.debug("Bitizen: [debug] send response", res);
+        }).catch(error => {
+          const res = {
+            id: req.id,
+            jsonrpc: req.jsonrpc,
+            error: error,
+          };
+          cb(error, res)
+          _bitizenConsole.debug("Bitizen: [debug] send response", res);
+        });
+      } else {
+        window.ethereum.request(req)
+      }
+    } else {
+      res = new Promise(async resolve => {
+        resolve({ id: undefined, jsonrpc: '2.0', result: await window.ethereum.request({ method: req, params: cb }) })
+      })
+      _bitizenConsole.debug("Bitizen: [debug] send response", res);
+      return res
+    }
   },
   removeListener: (eventName, listener) => window.ethereum._bitizenEventEmitter.removeListener(eventName, listener),
   removeAllListeners: (list) => window.ethereum._bitizenEventEmitter.removeAllListeners(list),
