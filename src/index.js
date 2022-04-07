@@ -69,7 +69,7 @@ window.ethereum = {
     list.forEach(el => {
       const [chainId, rpcUrl] = el;
       if (window.ethereum.debug) {
-        console.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
+        _bitizenConsole.debug("Bitizen: [debug] update RPC", chainId, rpcUrl);
       }
       window.ethereum._bitizenRpcReadEngines[chainId] = new BitizenRpcEngine()
       if (rpcUrl) {
@@ -80,7 +80,7 @@ window.ethereum = {
   },
   _BitizenEventEmit(topic, args = []) {
     if (window.ethereum.debug) {
-      console.debug("Bitizen: [debug] emit", topic, args);
+      _bitizenConsole.debug("Bitizen: [debug] emit", topic, args);
     }
     window.ethereum._bitizenEventEmitter.emit(topic, ...args)
   },
@@ -99,7 +99,7 @@ window.ethereum = {
       req.chainId = window.ethereum.chainId
     }
     if (window.ethereum.debug) {
-      console.debug("Bitizen: [debug] request", req.id, req.method);
+      _bitizenConsole.debug("Bitizen: [debug] request", req.id, req.method);
     }
     return new Promise(async (resolve, reject) => {
       let res
@@ -111,7 +111,7 @@ window.ethereum = {
       }
 
       if (window.ethereum.debug) {
-        console.debug("Bitizen: [debug] response", req.id, res);
+        _bitizenConsole.debug("Bitizen: [debug] response", req.id, res);
       }
       if (res.error) {
         reject(res.error)
@@ -123,20 +123,20 @@ window.ethereum = {
   on: (topic, callback) => {
     let msg = _bitizenHandledEvents[topic];
     if (!msg) {
-      console.error(`Bitizen: '` + topic + `' is deprecated and may be removed in the future or unsupported for now.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+      _bitizenConsole.error(`Bitizen: '` + topic + `' is deprecated and may be removed in the future or unsupported for now.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
       return;
     }
     if (typeof msg == 'string') {
-      console.warn(msg);
+      _bitizenConsole.warn(msg);
     }
     window.ethereum._bitizenEventEmitter.on(topic, callback)
   },
   enable: () => {
-    console.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
+    _bitizenConsole.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
     window.ethereum.request({ method: 'eth_requestAccounts' })
   },
   send: (method) => {
-    console.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+    _bitizenConsole.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
     return window.ethereum.request({ method })
   },
   removeListener: (eventName, listener) => window.ethereum._bitizenEventEmitter.removeListener(eventName, listener),
