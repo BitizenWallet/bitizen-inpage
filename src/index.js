@@ -57,6 +57,7 @@ window.ethereum = {
   debug: false,
   isConnected: () => window.ethereum.chainId != "",
   chainId: "",
+  networkVersion: "",
   reqId: 1,
   version: '0.0.18',
   _bitizenEventEmitter: new SafeEventEmitter(),
@@ -76,6 +77,7 @@ window.ethereum = {
       }
     });
     window.ethereum.chainId = list[0][0]
+    window.ethereum.networkVersion = list[0][0]
   },
   _BitizenEventEmit(topic, args = []) {
     _bitizenConsole.debug("Bitizen: [debug] emit", topic, args);
@@ -124,8 +126,32 @@ window.ethereum = {
     _bitizenConsole.warn(`Bitizen: 'ethereum.enable()' is deprecated and may be removed in the future.Please use the 'eth_requestAccounts' RPC method instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1102`);
     return window.ethereum.request({ method: 'eth_requestAccounts' });
   },
+  sendAsync: (req, cb) => {
+    _bitizenConsole.warn(`Bitizen: 'ethereum.sendAsync(...)' is deprecated and may be removed in the future.Please use 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+    _bitizenConsole.debug("Bitizen: [debug] sendAsync request", req, cb);
+    if (typeof req != 'object') {
+      req = { method: req, params: cb }
+    }
+    window.ethereum.request(req).then(result => {
+      const res = {
+        id: req.id,
+        jsonrpc: req.jsonrpc,
+        result: result,
+      };
+      cb(null, res)
+      _bitizenConsole.debug("Bitizen: [debug] sendAsync response", res);
+    }).catch(error => {
+      const res = {
+        id: req.id,
+        jsonrpc: req.jsonrpc,
+        error: error,
+      };
+      cb(error, res)
+      _bitizenConsole.debug("Bitizen: [debug] sendAsync response", res);
+    });
+  },
   send: (req, cb) => {
-    _bitizenConsole.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.sendAsync(...)' or 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
+    _bitizenConsole.warn(`Bitizen: 'ethereum.send(...)' is deprecated and may be removed in the future.Please use 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193`);
     _bitizenConsole.debug("Bitizen: [debug] send request", req, cb);
     if (typeof req == 'object') {
       if (cb) {
